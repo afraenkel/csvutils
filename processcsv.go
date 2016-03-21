@@ -87,4 +87,3 @@ func main() {
 
 	processLines(inpath, outpath, errpath)
 }
-p
