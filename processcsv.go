@@ -25,11 +25,9 @@ func processLines(inpath string, outpath string, errpath string) {
 		go processLine(jobs, results, mapper,  wg)
 	}
 
-	// Go over a file line by line and queue up a ton of work
 	go func() {
 		r := csv.NewReader(bufio.NewReader(infile))
 		for {
-			// Later I want to create a buffer of lines, not just line-by-line here ...
 			line, err := r.Read()
 			if err == io.EOF {
 				break
@@ -39,8 +37,6 @@ func processLines(inpath string, outpath string, errpath string) {
 		close(jobs)
 	}()
 
-	// Now collect all the results...
-	// But first, make sure we close the result channel when everything was processed
 	go func() {
 		wg.Wait()
 		close(results)
@@ -85,10 +81,10 @@ func mapper(records []string) outRec {
 }
 
 func main() {
-	// An artificial input source.  Normally this is a file passed on the command line.
 	inpath := "./test3.csv"
 	outpath := "./test.out.csv"
 	errpath := "./test.err.csv"
 
 	processLines(inpath, outpath, errpath)
 }
+p
