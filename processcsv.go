@@ -3,10 +3,16 @@ package main
 import (
 	"bufio"
 	"encoding/csv"
+	"errors"
 	"io"
 	"os"
 	"sync"
 )
+
+type outRec struct {
+	rec []string
+	processed bool
+}
 
 func processLines(inpath string, outpath string, errpath string) {
 	infile, _ := os.Open(inpath)
@@ -19,29 +25,36 @@ func processLines(inpath string, outpath string, errpath string) {
 	results := make(chan outRec)
 
 	wg := new(sync.WaitGroup)
-
 	for w := 1; w <= 3; w++ {
 		wg.Add(1)
 		go processLine(jobs, results, mapper,  wg)
 	}
 
-	go func() {
-		r := csv.NewReader(bufio.NewReader(infile))
-		for {
-			line, err := r.Read()
-			if err == io.EOF {
-				break
-			}
-			jobs <- line
-		}
-		close(jobs)
-	}()
+	go reader(infile, jobs)
 
 	go func() {
 		wg.Wait()
 		close(results)
 	}()
 
+	writer(outfile, errfile, results)
+}
+
+
+func reader(infile *os.File, jobs chan<- []string) {
+	r := csv.NewReader(bufio.NewReader(infile))
+	for {
+		line, err := r.Read()
+		if err == io.EOF {
+			break
+		}
+		jobs <- line
+	}
+	close(jobs)
+}
+
+
+func writer(outfile, errfile *os.File, results <-chan outRec) {
 	w := csv.NewWriter(outfile)
 	e := csv.NewWriter(errfile)
 
@@ -56,32 +69,35 @@ func processLines(inpath string, outpath string, errpath string) {
 
 	w.Flush()
 	e.Flush()
-
 }
 
-type outRec struct {
-	rec []string
-	processed bool
-}
 
-func processLine(jobs <-chan []string, results chan<- outRec, mapper func([]string) outRec, wg *sync.WaitGroup) {
+func processLine(jobs <-chan []string, results chan<- outRec, mapper func([]string) ([]string, error), wg *sync.WaitGroup) {
 	defer wg.Done()
 
 	for line := range jobs {
-		results <- mapper(line)
+		mapped, err := mapper(line)
+		if err != nil {
+			results <- outRec{line, false}
+		} else {
+			results <- outRec{mapped, true}
+		}
 	}
 }
 
-func mapper(records []string) outRec {
-	if records[0] == "athletics" {
-		return outRec{records[:2], true}
+
+func mapper(record []string) ([]string, error) {
+	if record[0] == "athletics" {
+		return record[:3], nil
 	} else {
-		return outRec{records, false}
+		return record, errors.New("")
 	}
 }
+
+
 
 func main() {
-	inpath := "./test3.csv"
+	inpath := "./test2.csv"
 	outpath := "./test.out.csv"
 	errpath := "./test.err.csv"
 
