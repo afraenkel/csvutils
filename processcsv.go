@@ -10,7 +10,7 @@ import (
 )
 
 type outRec struct {
-	rec []string
+	rec       []string
 	processed bool
 }
 
@@ -27,7 +27,7 @@ func processLines(inpath string, outpath string, errpath string) {
 	wg := new(sync.WaitGroup)
 	for w := 1; w <= 3; w++ {
 		wg.Add(1)
-		go processLine(jobs, results, mapper,  wg)
+		go processLine(jobs, results, mapper, wg)
 	}
 
 	go reader(infile, jobs)
@@ -40,7 +40,6 @@ func processLines(inpath string, outpath string, errpath string) {
 	writer(outfile, errfile, results)
 }
 
-
 func reader(infile *os.File, jobs chan<- []string) {
 	r := csv.NewReader(bufio.NewReader(infile))
 	for {
@@ -52,7 +51,6 @@ func reader(infile *os.File, jobs chan<- []string) {
 	}
 	close(jobs)
 }
-
 
 func writer(outfile, errfile *os.File, results <-chan outRec) {
 	w := csv.NewWriter(outfile)
@@ -71,7 +69,6 @@ func writer(outfile, errfile *os.File, results <-chan outRec) {
 	e.Flush()
 }
 
-
 func processLine(jobs <-chan []string, results chan<- outRec, mapper func([]string) ([]string, error), wg *sync.WaitGroup) {
 	defer wg.Done()
 
@@ -85,7 +82,6 @@ func processLine(jobs <-chan []string, results chan<- outRec, mapper func([]stri
 	}
 }
 
-
 func mapper(record []string) ([]string, error) {
 	if record[0] == "athletics" {
 		return record[:3], nil
@@ -93,8 +89,6 @@ func mapper(record []string) ([]string, error) {
 		return record, errors.New("")
 	}
 }
-
-
 
 func main() {
 	inpath := "./test2.csv"
