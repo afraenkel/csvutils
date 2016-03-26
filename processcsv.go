@@ -7,16 +7,14 @@ access columns via fields names instead of indices.
 ...
 */
 
-package main
+package csvutils
 
 import (
 	"bufio"
 	"encoding/csv"
-	"errors"
 	"io"
 	"os"
 	"sync"
-	"strconv"
 )
 
 // mappedRec contains the mapped record and whether
@@ -27,10 +25,10 @@ type mappedRec struct {
 }
 
 
-// pull this out this in a mapping file?
-type mapping struct {
-	inhdr, outhdr []string
-	mapper map[string]func([]string)(string, error)
+// pull this out this in a Mapping file?
+type Mapping struct {
+	Inhdr, Outhdr []string
+	Mapper map[string]func([]string)(string, error)
 }
 	
 
@@ -38,7 +36,7 @@ type mapping struct {
 // and writes the mapped file to outpath, with unprocessed lines written to errpath.
 //
 // to do: should take reader/writer interfaces instead of file paths.
-func ProcessLines(inpath string, outpath string, errpath string, m mapping) {
+func ProcessLines(inpath string, outpath string, errpath string, m Mapping) {
 	infile, _ := os.Open(inpath)
 	outfile, _ := os.Create(outpath)
 	errfile, _ := os.Create(errpath)
@@ -94,15 +92,15 @@ func writer(outfile, errfile *os.File, results <-chan mappedRec) {
 }
 
 
-func processLine(jobs <-chan []string, results chan<- mappedRec, m mapping, wg *sync.WaitGroup) {
+func processLine(jobs <-chan []string, results chan<- mappedRec, m Mapping, wg *sync.WaitGroup) {
 	defer wg.Done()
-	l := len(m.outhdr)
+	l := len(m.Outhdr)
 	out := make([]string, l)
 
 	for line := range jobs {
 		var k int
-		for _, field := range m.outhdr {
-			f := m.mapper[field]
+		for _, field := range m.Outhdr {
+			f := m.Mapper[field]
 			result, err := f(line)
 			if err != nil {
 				results <- mappedRec{line, false}
@@ -118,45 +116,3 @@ func processLine(jobs <-chan []string, results chan<- mappedRec, m mapping, wg *
 	}
 }
 
-
-// Example mapping -- to be hacked out into example file
-
-func isOakland(rec []string)(string, error) {
-	if rec[0] == "athletics" {
-		return "athletics", nil
-	} else {
-		return "", errors.New("")
-	}
-}
-
-func winDiff(rec []string)(string, error) {
-	w, err1 := strconv.Atoi(rec[1])
-	l, err2 := strconv.Atoi(rec[2])
-	var err error
-
-	if err1 != nil {
-		err = err1 
-	} else if err2 != nil {
-		err = err2
-	}
-			
-	return strconv.Itoa(w-l), err
-}
-
-var h1  = []string{"team","wins","losses"}
-
-var h2  = []string{"team", "win diff"}
-
-var trans = map[string]func([]string)(string, error){
-	"team": isOakland,
-	"win diff": winDiff,
-}
-
-func main() {
-	m:= mapping{inhdr: h1, outhdr: h2, mapper: trans}
-	inpath := "./test.csv"
-	outpath := "./test.out.csv"
-	errpath := "./test.err.csv"
-
-	ProcessLines(inpath, outpath, errpath, m)
-}

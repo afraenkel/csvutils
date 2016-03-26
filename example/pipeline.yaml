@@ -1,0 +1,5 @@
+inhdr: [team, wins, losses]
+outhdr: [team, win diff]
+mapping:
+  team: isOakland
+  win diff: winDiff
