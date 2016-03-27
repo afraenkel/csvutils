@@ -17,6 +17,14 @@ import (
 	"sync"
 )
 
+
+// Mapping is a struct defining the mapping of the csv
+type Mapping struct {
+	Inhdr, Outhdr []string
+	Mapper map[string]func([]string)(string, error)
+}
+
+
 // mappedRec contains the mapped record and whether
 // or not the original record was processed.
 type mappedRec struct {
@@ -24,13 +32,6 @@ type mappedRec struct {
 	processed bool
 }
 
-
-// pull this out this in a Mapping file?
-type Mapping struct {
-	Inhdr, Outhdr []string
-	Mapper map[string]func([]string)(string, error)
-}
-	
 
 // ProcessLines parses an input csv file on disk according to the given mapper
 // and writes the mapped file to outpath, with unprocessed lines written to errpath.
@@ -115,4 +116,3 @@ func processLine(jobs <-chan []string, results chan<- mappedRec, m Mapping, wg *
 		}
 	}
 }
-
