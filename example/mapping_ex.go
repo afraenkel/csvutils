@@ -36,11 +36,17 @@ func winDiff(rec []string)(string, error) {
 // Mapping (move to json)
 var h1  = []string{"team","wins","losses"}
 
-var h2  = []string{"team", "win diff"}
+var h2  = []string{"team", "win diff1", "win diff2","win diff3","win diff4","win diff5","win diff6","win diff7"}
 
 var trans = map[string]func([]string)(string, error){
 	"team": isOakland,
-	"win diff": winDiff,
+	"win diff1": winDiff,
+	"win diff2": winDiff,
+	"win diff3": winDiff,
+	"win diff4": winDiff,
+	"win diff5": winDiff,
+	"win diff6": winDiff,
+	"win diff7": winDiff,
 }
 
 

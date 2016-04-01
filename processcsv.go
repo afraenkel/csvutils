@@ -48,7 +48,7 @@ func ProcessLines(inpath string, outpath string, errpath string, m Mapping) {
 	results := make(chan mappedRec)
 
 	wg := new(sync.WaitGroup)
-	for w := 1; w <= 3; w++ {
+	for w := 1; w <= 5; w++ {
 		wg.Add(1)
 		go processLine(jobs, results, m, wg)
 	}
